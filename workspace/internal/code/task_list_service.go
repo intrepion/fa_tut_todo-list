@@ -1,6 +1,18 @@
 package code
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/intrepion/fa_tut_todo-list/workspace/internal/contracts"
+)
+
+type DefaultTaskListService struct {
+	store contracts.TaskStore
+}
+
+func NewTaskListService(store contracts.TaskStore) contracts.TaskListService {
+	return DefaultTaskListService{store: store}
+}
 
 func parseTaskStorage(storageText string) []string {
 	var tasks []string
@@ -30,4 +42,49 @@ func formatTaskList(taskList []string) []string {
 func serializeTaskStorage(taskList []string) string {
 	storageBytes, _ := json.Marshal(taskList)
 	return string(storageBytes)
+}
+
+func (s DefaultTaskListService) ListTasks() (contracts.TaskListResult, error) {
+	storageText, err := s.store.LoadTaskStorage()
+	if err != nil {
+		return contracts.TaskListResult{}, err
+	}
+
+	tasks := parseTaskStorage(storageText)
+	return buildTaskListResult(tasks), nil
+}
+
+func (s DefaultTaskListService) AddTask(taskText string) (contracts.TaskListResult, error) {
+	storageText, err := s.store.LoadTaskStorage()
+	if err != nil {
+		return contracts.TaskListResult{}, err
+	}
+
+	nextTasks := appendTask(parseTaskStorage(storageText), taskText)
+	if err := s.store.SaveTaskStorage(serializeTaskStorage(nextTasks)); err != nil {
+		return contracts.TaskListResult{}, err
+	}
+
+	return buildTaskListResult(nextTasks), nil
+}
+
+func (s DefaultTaskListService) RemoveTask(completedTaskText string) (contracts.TaskListResult, error) {
+	storageText, err := s.store.LoadTaskStorage()
+	if err != nil {
+		return contracts.TaskListResult{}, err
+	}
+
+	nextTasks := removeTaskByExactText(parseTaskStorage(storageText), completedTaskText)
+	if err := s.store.SaveTaskStorage(serializeTaskStorage(nextTasks)); err != nil {
+		return contracts.TaskListResult{}, err
+	}
+
+	return buildTaskListResult(nextTasks), nil
+}
+
+func buildTaskListResult(taskList []string) contracts.TaskListResult {
+	return contracts.TaskListResult{
+		Tasks: append([]string{}, taskList...),
+		Lines: formatTaskList(taskList),
+	}
 }
