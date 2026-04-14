@@ -17,3 +17,29 @@ func TestParseTaskStoragePreservesTheCanonicalTasksInOrder(t *testing.T) {
 		"Clean kitchen",
 	}, result)
 }
+
+func TestAppendTaskAppendsTheTaskToTheEndOfANewList(t *testing.T) {
+	result := appendTask([]string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+	}, "Clean kitchen")
+
+	assert.Equal(t, []string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+		"Clean kitchen",
+	}, result)
+}
+
+func TestRemoveTaskByExactTextRemovesTheFirstExactMatch(t *testing.T) {
+	result := removeTaskByExactText([]string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+		"Clean kitchen",
+	}, "Buy milk")
+
+	assert.Equal(t, []string{
+		"Learn how to invert binary trees",
+		"Clean kitchen",
+	}, result)
+}
