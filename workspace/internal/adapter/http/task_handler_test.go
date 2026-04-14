@@ -1,6 +1,7 @@
 package httpadapter
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -55,5 +56,70 @@ func TestTaskHandlerGetTasksReturnsTheCurrentTaskList(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"Learn how to invert binary trees", "Buy milk"}, body.Tasks)
 	assert.Equal(t, []string{"Learn how to invert binary trees", "Buy milk"}, body.Lines)
+	service.AssertExpectations(t)
+}
+
+func TestTaskHandlerAddTaskAppendsTheSubmittedTask(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/tasks",
+		bytes.NewBufferString("{\"task\":\"Buy milk\"}"),
+	)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	service := new(MockTaskListService)
+	service.On("AddTask", "Buy milk").Return(contracts.TaskListResult{
+		Tasks: []string{"Learn how to invert binary trees", "Buy milk"},
+		Lines: []string{"Learn how to invert binary trees", "Buy milk"},
+	}, nil)
+
+	handler := NewTaskHandler(service)
+	err := handler.AddTask(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	service.AssertExpectations(t)
+}
+
+func TestTaskHandlerAddTaskRejectsBlankInput(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/tasks",
+		bytes.NewBufferString("{\"task\":\"   \"}"),
+	)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	service := new(MockTaskListService)
+	handler := NewTaskHandler(service)
+	err := handler.AddTask(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	service.AssertExpectations(t)
+}
+
+func TestTaskHandlerRemoveTaskRemovesTheChosenTask(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/api/tasks?task=Buy%20milk", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	service := new(MockTaskListService)
+	service.On("RemoveTask", "Buy milk").Return(contracts.TaskListResult{
+		Tasks: []string{"Learn how to invert binary trees"},
+		Lines: []string{"Learn how to invert binary trees"},
+	}, nil)
+
+	handler := NewTaskHandler(service)
+	err := handler.RemoveTask(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
 	service.AssertExpectations(t)
 }
