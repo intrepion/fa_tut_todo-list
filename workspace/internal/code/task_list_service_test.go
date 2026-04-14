@@ -3,8 +3,24 @@ package code
 import (
 	"testing"
 
+	"github.com/intrepion/fa_tut_todo-list/workspace/internal/contracts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type MockTaskStore struct {
+	mock.Mock
+}
+
+func (m *MockTaskStore) LoadTaskStorage() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockTaskStore) SaveTaskStorage(storageText string) error {
+	args := m.Called(storageText)
+	return args.Error(0)
+}
 
 func TestParseTaskStoragePreservesTheCanonicalTasksInOrder(t *testing.T) {
 	storageText := "[\n  \"Learn how to invert binary trees\",\n  \"Buy milk\",\n  \"Clean kitchen\"\n]"
@@ -63,4 +79,51 @@ func TestSerializeTaskStorageReturnsAJsonArrayInOrder(t *testing.T) {
 	})
 
 	assert.JSONEq(t, "[\"Learn how to invert binary trees\",\"Buy milk\"]", result)
+}
+
+func TestTaskListServiceListTasksLoadsAndFormatsTasks(t *testing.T) {
+	store := new(MockTaskStore)
+	store.On("LoadTaskStorage").Return("[\"Learn how to invert binary trees\",\"Buy milk\"]", nil)
+
+	service := NewTaskListService(store)
+	result, err := service.ListTasks()
+
+	assert.NoError(t, err)
+	assert.Equal(t, contracts.TaskListResult{
+		Tasks: []string{"Learn how to invert binary trees", "Buy milk"},
+		Lines: []string{"Learn how to invert binary trees", "Buy milk"},
+	}, result)
+	store.AssertExpectations(t)
+}
+
+func TestTaskListServiceAddTaskPersistsUpdatedTasks(t *testing.T) {
+	store := new(MockTaskStore)
+	store.On("LoadTaskStorage").Return("[\"Learn how to invert binary trees\"]", nil)
+	store.On("SaveTaskStorage", "[\"Learn how to invert binary trees\",\"Buy milk\"]").Return(nil)
+
+	service := NewTaskListService(store)
+	result, err := service.AddTask("Buy milk")
+
+	assert.NoError(t, err)
+	assert.Equal(t, contracts.TaskListResult{
+		Tasks: []string{"Learn how to invert binary trees", "Buy milk"},
+		Lines: []string{"Learn how to invert binary trees", "Buy milk"},
+	}, result)
+	store.AssertExpectations(t)
+}
+
+func TestTaskListServiceRemoveTaskPersistsUpdatedTasks(t *testing.T) {
+	store := new(MockTaskStore)
+	store.On("LoadTaskStorage").Return("[\"Learn how to invert binary trees\",\"Buy milk\"]", nil)
+	store.On("SaveTaskStorage", "[\"Learn how to invert binary trees\"]").Return(nil)
+
+	service := NewTaskListService(store)
+	result, err := service.RemoveTask("Buy milk")
+
+	assert.NoError(t, err)
+	assert.Equal(t, contracts.TaskListResult{
+		Tasks: []string{"Learn how to invert binary trees"},
+		Lines: []string{"Learn how to invert binary trees"},
+	}, result)
+	store.AssertExpectations(t)
 }
