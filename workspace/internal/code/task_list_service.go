@@ -22,3 +22,12 @@ func removeTaskByExactText(taskList []string, completedTaskText string) []string
 	}
 	return next
 }
+
+func formatTaskList(taskList []string) []string {
+	return append([]string{}, taskList...)
+}
+
+func serializeTaskStorage(taskList []string) string {
+	storageBytes, _ := json.Marshal(taskList)
+	return string(storageBytes)
+}
