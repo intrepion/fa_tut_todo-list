@@ -18,11 +18,49 @@ class TaskListViewModel {
 }
 
 Future<TaskListViewModel> loadTasks(TaskApi api) async {
-  final response = await api.getTasks();
-  return TaskListViewModel.fromResponse(response);
+  try {
+    final response = await api.getTasks();
+    return TaskListViewModel.fromResponse(response);
+  } catch (_) {
+    return const TaskListViewModel(
+      tasks: [],
+      lines: [],
+      errorMessage: 'Sorry, the task API is unavailable right now.',
+    );
+  }
 }
 
 Future<TaskListViewModel> addTask(String task, TaskApi api) async {
-  final response = await api.addTask(task.trim());
-  return TaskListViewModel.fromResponse(response);
+  final trimmed = task.trim();
+  if (trimmed.isEmpty) {
+    return const TaskListViewModel(
+      tasks: [],
+      lines: [],
+      errorMessage: 'Task must not be blank.',
+    );
+  }
+
+  try {
+    final response = await api.addTask(trimmed);
+    return TaskListViewModel.fromResponse(response);
+  } catch (_) {
+    return const TaskListViewModel(
+      tasks: [],
+      lines: [],
+      errorMessage: 'Sorry, the task API is unavailable right now.',
+    );
+  }
+}
+
+Future<TaskListViewModel> removeTask(String task, TaskApi api) async {
+  try {
+    final response = await api.removeTask(task);
+    return TaskListViewModel.fromResponse(response);
+  } catch (_) {
+    return const TaskListViewModel(
+      tasks: [],
+      lines: [],
+      errorMessage: 'Sorry, the task API is unavailable right now.',
+    );
+  }
 }
