@@ -22,4 +22,19 @@ void main() {
     expect(result.lines, ['Learn how to invert binary trees', 'Buy milk']);
     expect(result.errorMessage, isNull);
   });
+
+  test('trims submitted tasks before calling the API', () async {
+    final api = MockTaskApi();
+    when(() => api.addTask('Buy milk')).thenAnswer(
+      (_) async => const TaskListResponse(
+        tasks: ['Learn how to invert binary trees', 'Buy milk'],
+        lines: ['Learn how to invert binary trees', 'Buy milk'],
+      ),
+    );
+
+    final result = await addTask('  Buy milk  ', api);
+
+    expect(result.tasks, ['Learn how to invert binary trees', 'Buy milk']);
+    verify(() => api.addTask('Buy milk')).called(1);
+  });
 }
