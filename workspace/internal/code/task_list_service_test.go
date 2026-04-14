@@ -43,3 +43,24 @@ func TestRemoveTaskByExactTextRemovesTheFirstExactMatch(t *testing.T) {
 		"Clean kitchen",
 	}, result)
 }
+
+func TestFormatTaskListReturnsOneLinePerTaskInOrder(t *testing.T) {
+	result := formatTaskList([]string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+	})
+
+	assert.Equal(t, []string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+	}, result)
+}
+
+func TestSerializeTaskStorageReturnsAJsonArrayInOrder(t *testing.T) {
+	result := serializeTaskStorage([]string{
+		"Learn how to invert binary trees",
+		"Buy milk",
+	})
+
+	assert.JSONEq(t, "[\"Learn how to invert binary trees\",\"Buy milk\"]", result)
+}
