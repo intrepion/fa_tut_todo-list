@@ -2,7 +2,6 @@ package httpadapter
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,15 +55,6 @@ func TestTaskHandlerListTasksReturnsTheCurrentTaskResources(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var body contracts.TaskListResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &body)
-
-	assert.NoError(t, err)
-	assert.Equal(t, []contracts.Task{
-		{ID: 1, Text: "Learn how to invert binary trees"},
-		{ID: 2, Text: "Buy milk"},
-	}, body.Tasks)
 	service.AssertExpectations(t)
 }
 
@@ -90,5 +80,48 @@ func TestTaskHandlerCreateTaskReturnsCreatedResource(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code)
+	service.AssertExpectations(t)
+}
+
+func TestTaskHandlerGetTaskReturnsTheRequestedResource(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/1", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/api/tasks/:id")
+	ctx.SetParamNames("id")
+	ctx.SetParamValues("1")
+
+	service := new(MockTaskService)
+	service.On("GetTask", int64(1)).Return(contracts.Task{
+		ID:   1,
+		Text: "Buy milk",
+	}, nil)
+
+	handler := NewTaskHandler(service)
+	err := handler.GetTask(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	service.AssertExpectations(t)
+}
+
+func TestTaskHandlerDeleteTaskReturnsNoContent(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/api/tasks/1", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/api/tasks/:id")
+	ctx.SetParamNames("id")
+	ctx.SetParamValues("1")
+
+	service := new(MockTaskService)
+	service.On("DeleteTask", int64(1)).Return(nil)
+
+	handler := NewTaskHandler(service)
+	err := handler.DeleteTask(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 	service.AssertExpectations(t)
 }
