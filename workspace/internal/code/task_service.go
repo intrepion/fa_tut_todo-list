@@ -35,9 +35,25 @@ func (s DefaultTaskService) CreateTask(taskText string) (contracts.Task, error) 
 }
 
 func (s DefaultTaskService) GetTask(taskID int64) (contracts.Task, error) {
-	panic("not implemented")
+	task, found, err := s.store.GetTask(taskID)
+	if err != nil {
+		return contracts.Task{}, err
+	}
+	if !found {
+		return contracts.Task{}, contracts.ErrTaskNotFound
+	}
+
+	return task, nil
 }
 
 func (s DefaultTaskService) DeleteTask(taskID int64) error {
-	panic("not implemented")
+	deleted, err := s.store.DeleteTask(taskID)
+	if err != nil {
+		return err
+	}
+	if !deleted {
+		return contracts.ErrTaskNotFound
+	}
+
+	return nil
 }
