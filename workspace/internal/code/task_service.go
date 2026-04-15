@@ -1,6 +1,10 @@
 package code
 
-import "github.com/intrepion/fa_tut_todo-list/workspace/internal/contracts"
+import (
+	"strings"
+
+	"github.com/intrepion/fa_tut_todo-list/workspace/internal/contracts"
+)
 
 type DefaultTaskService struct {
 	store contracts.TaskStore
@@ -22,7 +26,12 @@ func (s DefaultTaskService) ListTasks() (contracts.TaskListResponse, error) {
 }
 
 func (s DefaultTaskService) CreateTask(taskText string) (contracts.Task, error) {
-	panic("not implemented")
+	trimmed := strings.TrimSpace(taskText)
+	if trimmed == "" {
+		return contracts.Task{}, contracts.ErrTaskTextBlank
+	}
+
+	return s.store.CreateTask(trimmed)
 }
 
 func (s DefaultTaskService) GetTask(taskID string) (contracts.Task, error) {
