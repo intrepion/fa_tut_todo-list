@@ -50,3 +50,13 @@ func TestTaskServiceListTasksReturnsTasksInOrder(t *testing.T) {
 	}, result.Tasks)
 	store.AssertExpectations(t)
 }
+
+func TestTaskServiceCreateTaskRejectsBlankText(t *testing.T) {
+	store := new(MockTaskStore)
+	service := NewTaskService(store)
+
+	_, err := service.CreateTask("   ")
+
+	assert.ErrorIs(t, err, contracts.ErrTaskTextBlank)
+	store.AssertExpectations(t)
+}
