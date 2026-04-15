@@ -60,3 +60,25 @@ func TestTaskServiceCreateTaskRejectsBlankText(t *testing.T) {
 	assert.ErrorIs(t, err, contracts.ErrTaskTextBlank)
 	store.AssertExpectations(t)
 }
+
+func TestTaskServiceGetTaskReturnsNotFoundForMissingIds(t *testing.T) {
+	store := new(MockTaskStore)
+	store.On("GetTask", int64(9)).Return(contracts.Task{}, false, nil)
+
+	service := NewTaskService(store)
+	_, err := service.GetTask(9)
+
+	assert.ErrorIs(t, err, contracts.ErrTaskNotFound)
+	store.AssertExpectations(t)
+}
+
+func TestTaskServiceDeleteTaskReturnsNotFoundForMissingIds(t *testing.T) {
+	store := new(MockTaskStore)
+	store.On("DeleteTask", int64(9)).Return(false, nil)
+
+	service := NewTaskService(store)
+	err := service.DeleteTask(9)
+
+	assert.ErrorIs(t, err, contracts.ErrTaskNotFound)
+	store.AssertExpectations(t)
+}
