@@ -27,4 +27,27 @@ void main() {
     ]);
     expect(result.errorMessage, isNull);
   });
+
+  test('trims submitted tasks before calling the REST API', () async {
+    final api = MockTaskApi();
+    when(
+      () => api.createTask('Buy milk'),
+    ).thenAnswer((_) async => const Task(id: 2, text: 'Buy milk'));
+    when(() => api.getTasks()).thenAnswer(
+      (_) async => const TaskListResponse(
+        tasks: [
+          Task(id: 1, text: 'Learn how to invert binary trees'),
+          Task(id: 2, text: 'Buy milk'),
+        ],
+      ),
+    );
+
+    final result = await addTask('  Buy milk  ', api);
+
+    expect(result.tasks.map((task) => task.text).toList(), [
+      'Learn how to invert binary trees',
+      'Buy milk',
+    ]);
+    verify(() => api.createTask('Buy milk')).called(1);
+  });
 }
