@@ -17,3 +17,9 @@ Future<TaskListViewModel> loadTasks(TaskApi api) async {
   final response = await api.getTasks();
   return TaskListViewModel.fromResponse(response);
 }
+
+Future<TaskListViewModel> addTask(String task, TaskApi api) async {
+  await api.createTask(task.trim());
+  final response = await api.getTasks();
+  return TaskListViewModel.fromResponse(response);
+}
