@@ -59,4 +59,54 @@ void main() {
     ]);
     verify(() => api.createTask('Buy milk')).called(1);
   });
+
+  test('rejects blank submitted tasks without calling the API', () async {
+    final api = MockTaskApi();
+
+    final result = await addTask('   ', api);
+
+    expect(result.errorMessage, 'Task must not be blank.');
+    verifyNever(() => api.createTask(any()));
+  });
+
+  test('returns a friendly message when the task API is unavailable', () async {
+    final api = MockTaskApi();
+    when(() => api.getTasks()).thenThrow(Exception('boom'));
+
+    final result = await loadTasks(api);
+
+    expect(
+      result.errorMessage,
+      'Sorry, the task API is unavailable right now.',
+    );
+  });
+
+  test('removes the chosen task through the REST API', () async {
+    final api = MockTaskApi();
+    when(
+      () => api.deleteTask('22222222-2222-2222-2222-222222222222'),
+    ).thenAnswer((_) async {});
+    when(() => api.getTasks()).thenAnswer(
+      (_) async => const TaskListResponse(
+        tasks: [
+          Task(
+            id: '11111111-1111-1111-1111-111111111111',
+            text: 'Learn how to invert binary trees',
+          ),
+        ],
+      ),
+    );
+
+    final result = await removeTask(
+      '22222222-2222-2222-2222-222222222222',
+      api,
+    );
+
+    expect(result.tasks.map((task) => task.text).toList(), [
+      'Learn how to invert binary trees',
+    ]);
+    verify(
+      () => api.deleteTask('22222222-2222-2222-2222-222222222222'),
+    ).called(1);
+  });
 }
