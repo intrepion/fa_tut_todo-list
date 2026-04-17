@@ -8,6 +8,7 @@ database_url := "postgres://postgres@localhost:5432/todo_list?sslmode=disable"
 
 restore:
 	(cd {{workspace}} && go mod download)
+	(cd {{workspace}} && GOBIN=$(pwd)/bin go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0)
 
 generate:
 	(cd {{workspace}} && ./bin/sqlc generate)
